@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Harmonic Oscillator</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .control-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .plot-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .plot-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .plot-box {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .equations {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input[type="range"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .animation-container {
+            height: 300px;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .spring {
+            position: absolute;
+            left: 100px;
+            top: 150px;
+            width: 100px;
+            height: 4px;
+            background-color: #333;
+        }
+        .mass {
+            position: absolute;
+            left: 200px;
+            top: 135px;
+            width: 30px;
+            height: 30px;
+            background-color: #f44336;
+            border-radius: 50%;
+        }
+        .ground {
+            position: absolute;
+            left: 0;
+            top: 150px;
+            width: 100px;
+            height: 20px;
+            background-color: #795548;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interactive Harmonic Oscillator</h1>
+            <p>Explore the dynamics of a simple harmonic oscillator by adjusting the parameters below</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="mass">Mass (kg)</label>
+                <input type="range" id="mass" min="0.1" max="5" step="0.1" value="1">
+                <input type="number" id="mass-value" min="0.1" max="5" step="0.1" value="1">
+            </div>
+            <div class="control-group">
+                <label for="spring">Spring Constant (N/m)</label>
+                <input type="range" id="spring" min="0.1" max="10" step="0.1" value="1">
+                <input type="number" id="spring-value" min="0.1" max="10" step="0.1" value="1">
+            </div>
+            <div class="control-group">
+                <label for="damping">Damping Coefficient</label>
+                <input type="range" id="damping" min="0" max="2" step="0.05" value="0.1">
+                <input type="number" id="damping-value" min="0" max="2" step="0.05" value="0.1">
+            </div>
+            <div class="control-group">
+                <label for="initial-position">Initial Position (m)</label>
+                <input type="range" id="initial-position" min="-3" max="3" step="0.1" value="1">
+                <input type="number" id="initial-position-value" min="-3" max="3" step="0.1" value="1">
+            </div>
+            <div class="control-group">
+                <label for="initial-velocity">Initial Velocity (m/s)</label>
+                <input type="range" id="initial-velocity" min="-3" max="3" step="0.1" value="0">
+                <input type="number" id="initial-velocity-value" min="-3" max="3" step="0.1" value="0">
+            </div>
+            <div class="control-group">
+                <label for="time-span">Time Span (s)</label>
+                <input type="range" id="time-span" min="5" max="50" step="5" value="20">
+                <input type="number" id="time-span-value" min="5" max="50" step="5" value="20">
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button id="calculate-btn">Calculate</button>
+            </div>
+        </div>
+        
+        <div class="animation-container">
+            <div class="ground"></div>
+            <div class="spring" id="spring-visual"></div>
+            <div class="mass" id="mass-visual"></div>
+        </div>
+        
+        <div class="plot-container">
+            <div class="plot-box">
+                <div id="position-plot"></div>
+            </div>
+            <div class="plot-box">
+                <div id="energy-plot"></div>
+            </div>
+        </div>
+        
+        <div class="equations">
+            <h2>Harmonic Oscillator Equations</h2>
+            <div>
+                <h3>Equation of Motion</h3>
+                <p>The differential equation describing the motion of a damped harmonic oscillator is:</p>
+                <p>\[ m\frac{d^2x}{dt^2} + b\frac{dx}{dt} + kx = 0 \]</p>
+                <p>where:</p>
+                <ul>
+                    <li>\(m\) is the mass</li>
+                    <li>\(b\) is the damping coefficient</li>
+                    <li>\(k\) is the spring constant</li>
+                    <li>\(x\) is the displacement from equilibrium</li>
+                </ul>
+                
+                <h3>Solution</h3>
+                <p>For an undamped oscillator (\(b = 0\)):</p>
+                <p>\[ x(t) = A\cos(\omega t + \phi) \]</p>
+                
+                <p>For an underdamped oscillator (\(b < 2\sqrt{km}\)):</p>
+                <p>\[ x(t) = e^{-\gamma t}(C_1\cos(\omega_d t) + C_2\sin(\omega_d t)) \]</p>
+                
+                <p>where:</p>
+                <ul>
+                    <li>\(\omega = \sqrt{\frac{k}{m}}\) is the natural angular frequency</li>
+                    <li>\(\gamma = \frac{b}{2m}\) is the damping ratio</li>
+                    <li>\(\omega_d = \sqrt{\omega^2 - \gamma^2}\) is the damped angular frequency</li>
+                </ul>
+                
+                <h3>Energy</h3>
+                <p>Potential Energy: \[ U = \frac{1}{2}kx^2 \]</p>
+                <p>Kinetic Energy: \[ T = \frac{1}{2}mv^2 \]</p>
+                <p>Total Energy: \[ E = T + U \]</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize plots
+            const positionPlot = document.getElementById('position-plot');
+            const energyPlot = document.getElementById('energy-plot');
+            
+            // Initialize with empty data
+            Plotly.newPlot(positionPlot, [{
+                x: [],
+                y: [],
+                name: 'Position',
+                line: { color: '#1f77b4' }
+            }, {
+                x: [],
+                y: [],
+                name: 'Velocity',
+                line: { color: '#ff7f0e' },
+                yaxis: 'y2'
+            }], {
+                title: 'Position and Velocity vs Time',
+                xaxis: { title: 'Time (s)' },
+                yaxis: { title: 'Position (m)', titlefont: { color: '#1f77b4' }, tickfont: { color: '#1f77b4' } },
+                yaxis2: {
+                    title: 'Velocity (m/s)',
+                    titlefont: { color: '#ff7f0e' },
+                    tickfont: { color: '#ff7f0e' },
+                    overlaying: 'y',
+                    side: 'right'
+                },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            });
+            
+            Plotly.newPlot(energyPlot, [{
+                x: [],
+                y: [],
+                name: 'Potential Energy',
+                line: { color: '#2ca02c' }
+            }, {
+                x: [],
+                y: [],
+                name: 'Kinetic Energy',
+                line: { color: '#d62728' }
+            }, {
+                x: [],
+                y: [],
+                name: 'Total Energy',
+                line: { color: '#9467bd' }
+            }], {
+                title: 'Energy vs Time',
+                xaxis: { title: 'Time (s)' },
+                yaxis: { title: 'Energy (J)' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            });
+            
+            // Sync range inputs with number inputs
+            function syncInputs(rangeName) {
+                const range = document.getElementById(rangeName);
+                const value = document.getElementById(`${rangeName}-value`);
+                
+                range.addEventListener('input', () => {
+                    value.value = range.value;
+                });
+                
+                value.addEventListener('input', () => {
+                    range.value = value.value;
+                });
+            }
+            
+            // Sync all input pairs
+            syncInputs('mass');
+            syncInputs('spring');
+            syncInputs('damping');
+            syncInputs('initial-position');
+            syncInputs('initial-velocity');
+            syncInputs('time-span');
+            
+            // Animation variables
+            let animationId = null;
+            let currentTime = 0;
+            let timeData = [];
+            let positionData = [];
+            
+            // Handle calculate button click
+            document.getElementById('calculate-btn').addEventListener('click', function() {
+                // Get values from inputs
+                const mass = parseFloat(document.getElementById('mass-value').value);
+                const springConstant = parseFloat(document.getElementById('spring-value').value);
+                const damping = parseFloat(document.getElementById('damping-value').value);
+                const initialPosition = parseFloat(document.getElementById('initial-position-value').value);
+                const initialVelocity = parseFloat(document.getElementById('initial-velocity-value').value);
+                const timeSpan = parseFloat(document.getElementById('time-span-value').value);
+                
+                // Send data to server
+                fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        mass,
+                        spring_constant: springConstant,
+                        initial_position: initialPosition,
+                        initial_velocity: initialVelocity,
+                        damping,
+                        time_span: timeSpan
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Update position and velocity plot
+                    Plotly.update(positionPlot, {
+                        x: [data.time, data.time],
+                        y: [data.position, data.velocity]
+                    }, {}, [0, 1]);
+                    
+                    // Update energy plot
+                    Plotly.update(energyPlot, {
+                        x: [data.time, data.time, data.time],
+                        y: [data.potential_energy, data.kinetic_energy, data.total_energy]
+                    }, {}, [0, 1, 2]);
+                    
+                    // Store data for animation
+                    timeData = data.time;
+                    positionData = data.position;
+                    
+                    // Reset and start animation
+                    if (animationId) {
+                        cancelAnimationFrame(animationId);
+                    }
+                    currentTime = 0;
+                    animateOscillator();
+                });
+            });
+            
+            // Animate the oscillator
+            function animateOscillator() {
+                if (currentTime >= timeData.length) {
+                    currentTime = 0;
+                }
+                
+                if (timeData.length > 0 && positionData.length > 0) {
+                    const position = positionData[Math.floor(currentTime)];
+                    const massVisual = document.getElementById('mass-visual');
+                    const springVisual = document.getElementById('spring-visual');
+                    
+                    // Scale position for visualization (100px is equilibrium)
+                    const scaledPosition = 100 * position;
+                    
+                    // Update mass position
+                    massVisual.style.left = `${200 + scaledPosition}px`;
+                    
+                    // Update spring length
+                    springVisual.style.width = `${100 + scaledPosition}px`;
+                    
+                    currentTime += 1;
+                    if (currentTime < timeData.length) {
+                        animationId = requestAnimationFrame(animateOscillator);
+                    }
+                }
+            }
+            
+            // Initialize calculation with default values
+            document.getElementById('calculate-btn').click();
+        });
+    </script>
+</body>
+</html> 
