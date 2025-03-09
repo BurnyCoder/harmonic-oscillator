@@ -2,6 +2,8 @@
 
 A web-based interactive harmonic oscillator visualization tool that allows users to explore the dynamics of a simple harmonic oscillator. This tool includes mathematical equations, animated visualizations, and interactive plots.
 
+![image](https://github.com/user-attachments/assets/ac6820c9-b157-47f3-b55b-33616658a910)
+
 ## Features
 
 - Interactive controls to adjust:
